@@ -376,8 +376,10 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 						type: type
 					},
 					function(x, rv) {
-						if (rv.status) {
-							var use_time = rv.use_time;
+						if(x.readyState === 4 && x.status === 200) {
+							try{res = JSON.parse(x.responseText);}catch(e){res=null;}
+							if(res !==null && typeof(res) === "object") {
+							var use_time = res.use_time;
 							var speed = "";
 							if (use_time < 1) {
 								s.className="green";
@@ -396,6 +398,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 								speed = "<%:Very Slow%>";
 							}
 							s.innerHTML = speed;
+							}
 						}
 						else {
 							s.className="red";
@@ -415,8 +418,10 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 				s.innerHTML = '<%:Check...%>';
 				XHR.get('<%=dsp.build_url("admin/vpn/passwall/check_port")%>', null,
 					function(x, rv) {
-						if (rv.ret) {
-							s.innerHTML = rv.ret;
+						if(x.readyState === 4 && x.status === 200) {
+							try{res = JSON.parse(x.responseText);}catch(e){res=null;}
+							if(res !==null && typeof(res) === "object") {
+							s.innerHTML = res.ret;
 							var clear_btn = document.getElementById('clear_check_port_btn');
 							clear_btn.style.display = "inline-block";
 							clear_btn.onclick = function(event) {
@@ -425,6 +430,7 @@ https://github.com/pure-css/pure/blob/master/LICENSE.md
 									event.stopPropagation();
 								else
 									event.cancelBubble = true;
+							}
 							}
 						}
 						dom.setAttribute('onclick','check_port(this)');

@@ -170,7 +170,7 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 	var kcptun_status = document.getElementById('_kcptun_status');
 	var baidu_status = document.getElementById('_baidu_status');
 	var google_status = document.getElementById('_google_status');
-	XHR.poll(3, '<%=dsp.build_url("admin/vpn/passwall/status")%>', null,
+	XHR.poll(10, '<%=dsp.build_url("admin/vpn/passwall/status")%>', null,
 		function(x, json) {
 			if(x && x.status == 200) {
 				var tcp_node_status = document.getElementById('_tcp_node_status');
@@ -195,6 +195,7 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 						tcp_node_status.innerHTML = text;
 						
 						var kcptun_tcp_node_status = document.getElementById('_kcptun_tcp_node_status');
+						if (kcptun_tcp_node_status) {
 						text = "";
 						if (tcp_node_num == 1) {
 							if (json["kcptun_tcp_node1_status"])
@@ -211,6 +212,7 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 							}
 						}
 						kcptun_tcp_node_status.innerHTML = text;
+						}
 					}
 				}
 				
@@ -276,8 +278,10 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 			function(x, rv) {
 				var s = document.getElementById('_' + type + '_status');
 				if(s) {
-					if(rv.status) {
-						var use_time = rv.use_time;
+					if(x.readyState === 4 && x.status === 200) {
+						try{res = JSON.parse(x.responseText);}catch(e){res=null;}
+						if(res !==null && typeof(res) === "object") {
+						var use_time = res.use_time;
 						var speed = "";
 						var color="red";
 						if (use_time < 1) {
@@ -299,6 +303,7 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 						//s.setAttribute("color", color);
 						btn.setAttribute("style","background-color: " + color + " !important; border-color: " + color + " !important;");
 						btn.value = speed;
+						}
 					}
 					else {
 						//s.setAttribute("color", "red");
@@ -320,9 +325,13 @@ local status_show_ip111 = api.uci_get_type("global_other", "status_show_ip111", 
 			function(x, rv) {
 				var s = document.getElementById('_node_status');
 				if(s) {
-					s.innerHTML = rv.ret;
+					if(x.readyState === 4 && x.status === 200) {
+					try{res = JSON.parse(x.responseText);}catch(e){res=null;}
+					if(res !==null && typeof(res) === "object") {
+					s.innerHTML = res.ret;
 					var clear_btn = document.getElementById('clear_check_port_btn');
 					clear_btn.style.display = "inline-block";
+					}}
 				}
 				btn.disabled = false;
 				btn.value = '<%:Check%>';
