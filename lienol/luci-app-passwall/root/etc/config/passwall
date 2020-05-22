@@ -10,8 +10,8 @@ config global
 	option localhost_udp_proxy_mode 'chnroute'
 	option localhost_tcp_proxy_mode 'chnroute'
 	option dns_mode 'chinadns-ng'
-	option up_china_dns '127.0.0.1#6053'
-	option up_trust_chinadns_ng_dns '127.0.0.1#7053'
+	option up_china_dns '223.5.5.5'
+	option up_trust_chinadns_ng_dns '127.0.0.1#5353'
 
 config global_haproxy
 	option balancing_enable '0'

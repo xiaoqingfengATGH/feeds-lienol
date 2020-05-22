@@ -91,9 +91,9 @@ check_port_exists() {
 	protocol=$2
 	result=
 	if [ "$protocol" = "tcp" ]; then
-		result=$(netstat -tln | grep -c ":$port")
+		result=$(netstat -tln | grep -c ":$port ")
 	elif [ "$protocol" = "udp" ]; then
-		result=$(netstat -uln | grep -c ":$port")
+		result=$(netstat -uln | grep -c ":$port ")
 	fi
 	if [ "$result" = 1 ]; then
 		echo 1
@@ -152,7 +152,7 @@ UDP_NODE_NUM=$(config_t_get global_other udp_node_num 1)
 for i in $(seq 1 $UDP_NODE_NUM); do
 	eval UDP_NODE$i=$(config_t_get global udp_node$i nil)
 done
-UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1051)
+UDP_REDIR_PORT1=$(config_t_get global_forwarding udp_redir_port 1041)
 UDP_REDIR_PORT2=$(expr $UDP_REDIR_PORT1 + 1)
 UDP_REDIR_PORT3=$(expr $UDP_REDIR_PORT2 + 1)
 
@@ -302,6 +302,9 @@ gen_start_config() {
 		elif [ "$type" == "trojan" ]; then
 			lua $API_GEN_TROJAN $node client $bind $local_port >$config_file
 			ln_start_bin $(find_bin trojan) trojan_socks_$5 "-c $config_file"
+		elif [ "$type" == "trojan-go" ]; then
+			lua $API_GEN_TROJAN $node client $bind $local_port >$config_file
+			ln_start_bin $(find_bin trojan-go) trojan_socks_$5 "-config $config_file"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			local brook_tls=$(config_n_get $node brook_tls 0)
@@ -360,6 +363,9 @@ gen_start_config() {
 			local server_password=$(config_n_get $node password)
 			eval port=\$UDP_REDIR_PORT$5
 			ln_start_bin $(find_bin ipt2socks) ipt2socks_udp_$5 "-4 -U -l $port -b 0.0.0.0 -s 127.0.0.1 -p $socks_port -R"
+		elif [ "$type" == "trojan-go" ]; then
+			echo lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
+			ln_start_bin /sbin/logread trojan_udp_$5 "-f $config_file"
 		elif [ "$type" == "brook" ]; then
 			local protocol=$(config_n_get $node brook_protocol client)
 			if [ "$protocol" == "wsclient" ]; then
@@ -410,6 +416,9 @@ gen_start_config() {
 			for k in $(seq 1 $process); do
 				ln_start_bin $(find_bin trojan) trojan_tcp_$5 "-c $config_file"
 			done
+		elif [ "$type" == "trojan-go" ]; then
+			lua $API_GEN_TROJAN $node nat "0.0.0.0" $local_port >$config_file
+			ln_start_bin $(find_bin trojan-go) trojan_tcp_$5 "-config $config_file"
 		else
 			local kcptun_use=$(config_n_get $node use_kcp 0)
 			if [ "$kcptun_use" == "1" ]; then

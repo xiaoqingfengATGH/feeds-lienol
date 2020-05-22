@@ -736,6 +736,15 @@ msgstr "插件名称"
 msgid "Plugin Arguments"
 msgstr "插件参数"
 
+msgid "Finger Print"
+msgstr "指纹伪造"
+
+msgid "Obfs Password"
+msgstr "混淆密码"
+
+msgid "Double TLS"
+msgstr "双重验证"
+
 msgid "Proxy IPv6"
 msgstr "代理IPv6"
 
