@@ -17,8 +17,7 @@ function index()
     if nixio.fs.access("/etc/config/passwall") and
         nixio.fs.access("/etc/config/passwall_show") then
         entry({"admin", "vpn", "passwall"},
-              alias("admin", "vpn", "passwall", "settings"), _("Pass Wall"), 1).dependent =
-            true
+              alias("admin", "vpn", "passwall", "settings"), _("Pass Wall"), 1).acl_depends = { "luci-app-passwall" }
     end
     entry({"admin", "vpn", "passwall", "settings"}, cbi("passwall/global"),
           _("Basic Settings"), 1).dependent = true
