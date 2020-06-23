@@ -646,6 +646,20 @@ start_dns() {
 }
 
 add_dnsmasq() {
+
+	LAST_UPSTREAM=$(uci get dhcp.@dnsmasq[-1].server)  >/dev/null 2>&1
+	if [ ! -z "$LAST_UPSTREAM" ]; then
+		echo $LAST_UPSTREAM > $APP_PATH/LAST_UPSTREAM
+	fi
+
+	LAST_NORESOLV=$(uci get dhcp.@dnsmasq[0].noresolv) >/dev/null 2>&1
+	if [ ! -z "$LAST_NORESOLV" ]; then
+		echo $LAST_NORESOLV > $APP_PATH/LAST_NORESOLV
+	fi
+	uci del dhcp.@dnsmasq[-1].server >/dev/null 2>&1
+	uci delete dhcp.@dnsmasq[0].resolvfile
+	uci set dhcp.@dnsmasq[0].noresolv=1
+
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local adblock=$(config_t_get global_rules adblock 0)
 	local chinadns_mode=0
@@ -770,6 +784,30 @@ del_dnsmasq() {
 	rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	rm -rf $TMP_DNSMASQ_PATH
+	
+	if [ -s "$APP_PATH/LAST_UPSTREAM" ]; then
+		LAST_UPSTREAM=$(cat $APP_PATH/LAST_UPSTREAM)
+		uci add_list dhcp.@dnsmasq[0].server=$LAST_UPSTREAM
+		rm -rf $APP_PATH/LAST_UPSTREAM
+	fi
+	
+	LAST_NORESOLV=0
+	if [ -s "$APP_PATH/LAST_NORESOLV" ]; then
+		LAST_NORESOLV=$(cat $APP_PATH/LAST_NORESOLV)
+		rm -rf $APP_PATH/LAST_NORESOLV
+	fi
+	if [ "$LAST_NORESOLV" = "0"]; then
+	  if [ -s "/tmp/resolv.conf.d/resolv.conf.auto" ]; then
+		 uci set dhcp.@dnsmasq[0].resolvfile=/tmp/resolv.conf.d/resolv.conf.auto >/dev/null 2>&1
+		 uci set dhcp.@dnsmasq[0].noresolv=0 >/dev/null 2>&1
+	  elif [ -s "/tmp/resolv.conf.auto" ]; then
+		 uci set dhcp.@dnsmasq[0].resolvfile=/tmp/resolv.conf.auto >/dev/null 2>&1
+		 uci set dhcp.@dnsmasq[0].noresolv=0 >/dev/null 2>&1
+	  fi
+	else
+		uci delete dhcp.@dnsmasq[0].resolvfile >/dev/null 2>&1
+		uci set dhcp.@dnsmasq[0].noresolv=1
+	fi
 }
 
 start_haproxy() {
