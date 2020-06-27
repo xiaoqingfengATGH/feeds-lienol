@@ -4,14 +4,14 @@ config global
 	option tcp_node1 'nil'
 	option udp_node1 'nil'
 	option socks_node1 'nil'
-	option dns_mode 'pdnsd'
-	option up_china_dns 'default'
-	option dns_forward '8.8.4.4'
 	option use_tcp_node_resolve_dns '1'
 	option tcp_proxy_mode 'chnroute'
 	option udp_proxy_mode 'chnroute'
-	option localhost_tcp_proxy_mode 'gfwlist'
-	option localhost_udp_proxy_mode 'gfwlist'
+	option localhost_udp_proxy_mode 'chnroute'
+	option localhost_tcp_proxy_mode 'chnroute'
+	option dns_mode 'chinadns-ng'
+	option up_china_dns '127.0.0.1#6053'
+	option up_trust_chinadns_ng_dns '127.0.0.1#7053'
 
 config global_haproxy
 	option balancing_enable '0'
@@ -50,9 +50,9 @@ config global_rules
 	option chnlist_update '1'
 	option chnroute_update '1'
 	option gfwlist_update '1'
-	option gfwlist_version '2020-03-10'
-	option chnroute_version '2020-03-10'
-	option chnlist_version '2020-03-10'
+	option gfwlist_version '2020-04-14'
+	option chnroute_version '2020-05-22'
+	option chnlist_version '2020-04-22'
 	
 config global_app
 	option v2ray_file '/usr/bin/v2ray/'
