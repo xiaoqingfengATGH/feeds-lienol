@@ -8,7 +8,7 @@ local dsp = require "luci.dispatcher"
 <style>
 #add_link_div{
 	display: none;
-	width: 30rem;
+	width: 50rem;
 	position: absolute;
 	left:50%;
 	top:50%;
@@ -16,8 +16,12 @@ local dsp = require "luci.dispatcher"
 	padding-top: 30px;
 	z-index: 99;
 	text-align: center;
-	background: white;
+	background: rgba(7,34,62,0.95);
     box-shadow: darkgrey 10px 10px 30px 5px;
+}
+
+textarea#nodes_link{
+	width:49rem;
 }
 </style>
 
@@ -76,7 +80,7 @@ local dsp = require "luci.dispatcher"
 	<div class="cbi-value">
 		<label class="cbi-value-title"><%:SS/SSR/V2ray/Trojan Link%></label>
 		<div class="cbi-value-field">
-			<textarea id="nodes_link" rows="5" cols="50"></textarea>
+			<textarea id="nodes_link" rows="5" cols="50" class="cbi-input-textarea"></textarea>
 		</div>
 	</div>
 	<div class="cbi-value">
