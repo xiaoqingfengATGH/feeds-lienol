@@ -64,7 +64,7 @@ o = s:option(DummyValue, "remarks", translate("Remarks"))
 
 -- [[ App Settings ]]--
 s = m:section(TypedSection, "global_app", translate("App Update"),
-              "<font color='red'>" ..
+              "<font>" ..
                   translate("Please confirm that your firmware supports FPU.") ..
                   "</font>")
 s.anonymous = true

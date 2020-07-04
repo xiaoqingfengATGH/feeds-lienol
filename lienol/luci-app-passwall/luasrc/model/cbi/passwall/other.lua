@@ -62,7 +62,7 @@ o:value("1:65535", translate("All"))
 
 ---- UDP No Redir Ports
 o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
-             "<font color='red'>" .. translate(
+             "<font>" .. translate(
                  "Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
                  "</font>")
 o.default = "disable"
@@ -123,7 +123,7 @@ o.rmempty = true
 
 -- [[ Other Settings ]]--
 s = m:section(TypedSection, "global_other", translate("Other Settings"),
-              "<font color='red'>" .. translatef(
+              "<font>" .. translatef(
                   "You can only set up a maximum of %s nodes for the time being, Used for access control.",
                   "3") .. "</font>")
 s.anonymous = true

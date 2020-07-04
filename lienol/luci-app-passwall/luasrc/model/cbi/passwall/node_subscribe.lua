@@ -62,7 +62,7 @@ o.default = "1"
 o.rmempty = false
 
 s = m:section(TypedSection, "subscribe_list", "",
-              "<font color='red'>" .. translate(
+              "<font>" .. translate(
                   "Please input the subscription url first, save and submit before updating. If you subscribe to update, it is recommended to delete all subscriptions and then re-subscribe.") ..
                   "</font>")
 s.addremove = true
