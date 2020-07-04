@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.9
-PKG_RELEASE:=xiaoqingfengMod-2
-PKG_DATE:=20200627
+PKG_RELEASE:=xiaoqingfengMod-3
+PKG_DATE:=20200704
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -149,6 +149,7 @@ endef
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 chmod a+x $${IPKG_INSTROOT}/usr/share/passwall/* >/dev/null 2>&1
+chmod a+x $${IPKG_INSTROOT}/usr/lib/lua/luci/model/cbi/passwall/server/api/app.lua >/dev/null 2>&1
 touch $${IPKG_INSTROOT}/etc/config/passwall_show >/dev/null 2>&1
 exit 0
 endef
