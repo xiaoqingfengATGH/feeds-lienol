@@ -1,12 +1,6 @@
 #!/usr/bin/lua
 
 require 'luci.sys'
-<<<<<<< HEAD
-local luci = luci
-local jsonc = require "luci.jsonc"
-
-local json = jsonc.parse(luci.sys.exec("cat /usr/share/ssr_mudb_server/mudb.json"))
-=======
 local jsonc = require "luci.jsonc"
 
 local function get_config_path()
@@ -18,7 +12,6 @@ local function get_config_json()
 end
 
 local json = jsonc.parse(get_config_json())
->>>>>>> rebornLienol
 if json then
 	for index = 1, table.maxn(json) do
 		local o = json[index]
