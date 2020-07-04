@@ -81,26 +81,13 @@ for i = 1, udp_node_num, 1 do
     for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 end
 
-o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
--- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-o.default = "default"
-o:value("default", translate("Default"))
-o:value("dnsbyisp", translate("dnsbyisp"))
-o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
-o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
-o:value("114.114.114.114", "114.114.114.114 (114DNS)")
-o:value("114.114.115.115", "114.114.115.115 (114DNS)")
-o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
-o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
-o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
-o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
-o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
-
 ---- DNS Forward Mode
 o = s:option(ListValue, "dns_mode", translate("DNS Mode"))
 -- o.description = translate("if has problem, please try another mode.<br />if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq.")
 o.rmempty = false
+o.default = "homelede_build_in"
 o:reset_values()
+o:value("homelede_build_in", translate("HomeLede built-in dns mode"))
 if is_finded("chinadns-ng") then
     o:value("chinadns-ng", "ChinaDNS-NG")
 end
@@ -112,6 +99,22 @@ if is_finded("dns2socks") then
 end
 o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
+
+o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
+-- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
+o.default = "127.0.0.1#6053"
+o:value("127.0.0.1#6053", translate("HomeLede MainLand DNS Group"))
+o:value("default", translate("Default"))
+o:value("dnsbyisp", translate("dnsbyisp"))
+o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
+o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
+o:value("114.114.114.114", "114.114.114.114 (114DNS)")
+o:value("114.114.115.115", "114.114.115.115 (114DNS)")
+o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
+o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
+o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
+o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
+o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
 
 ---- Upstream trust DNS Server for ChinaDNS-NG
 o = s:option(ListValue, "up_trust_chinadns_ng_dns",
@@ -144,10 +147,12 @@ o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
 o = s:option(Flag, "fair_mode", translate("Fair Mode"))
 o.default = "1"
 o:depends({dns_mode = "chinadns-ng"})
+o:depends({dns_mode = "homelede_build_in"})
 
 ---- DNS Forward
 o = s:option(Value, "dns_forward", translate("DNS Address"))
 o.default = "8.8.4.4"
+o:value("127.0.0.1#7053",translate("HomeLede Oversea DNS Group"))
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")

@@ -516,6 +516,26 @@ stop_crontab() {
 	#echolog "清除定时执行命令。"
 }
 
+prepare_chinadns_ng() {
+		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
+		[ -f "$TMP_PATH/gfwlist.txt" ] && {
+			[ -f "$RULES_PATH/blacklist_host" -a -s "$RULES_PATH/blacklist_host" ] && cat $RULES_PATH/blacklist_host >> $TMP_PATH/gfwlist.txt
+			local gfwlist_param="-g $TMP_PATH/gfwlist.txt"
+		}
+		[ -f "$RULES_PATH/chnlist" ] && cp -a $RULES_PATH/chnlist $TMP_PATH/chnlist
+		[ -f "$TMP_PATH/chnlist" ] && {
+			[ -f "$RULES_PATH/whitelist_host" -a -s "$RULES_PATH/whitelist_host" ] && cat $RULES_PATH/whitelist_host >> $TMP_PATH/chnlist
+			local chnlist_param="-m $TMP_PATH/chnlist -M"
+		}
+		
+		local fair_mode=$(config_t_get global fair_mode 1)
+		if [ "$fair_mode" == "1" ]; then
+			fair_mode="-f"
+		else
+			fair_mode=""
+		fi
+}
+
 start_dns() {
 	case "$DNS_MODE" in
 	nonuse)
@@ -547,23 +567,8 @@ start_dns() {
 	;;
 	chinadns-ng)
 		other_port=$(expr $DNS_PORT + 1)
-		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
-		[ -f "$TMP_PATH/gfwlist.txt" ] && {
-			[ -f "$RULES_PATH/blacklist_host" -a -s "$RULES_PATH/blacklist_host" ] && cat $RULES_PATH/blacklist_host >> $TMP_PATH/gfwlist.txt
-			local gfwlist_param="-g $TMP_PATH/gfwlist.txt"
-		}
-		[ -f "$RULES_PATH/chnlist" ] && cp -a $RULES_PATH/chnlist $TMP_PATH/chnlist
-		[ -f "$TMP_PATH/chnlist" ] && {
-			[ -f "$RULES_PATH/whitelist_host" -a -s "$RULES_PATH/whitelist_host" ] && cat $RULES_PATH/whitelist_host >> $TMP_PATH/chnlist
-			local chnlist_param="-m $TMP_PATH/chnlist -M"
-		}
 		
-		local fair_mode=$(config_t_get global fair_mode 1)
-		if [ "$fair_mode" == "1" ]; then
-			fair_mode="-f"
-		else
-			fair_mode=""
-		fi
+		prepare_chinadns_ng
 		
 		up_trust_chinadns_ng_dns=$(config_t_get global up_trust_chinadns_ng_dns "pdnsd")
 		if [ "$up_trust_chinadns_ng_dns" == "pdnsd" ]; then
@@ -594,10 +599,36 @@ start_dns() {
 			DNS_FORWARD=$(echo $DNS_FORWARD | sed 's/,/ /g')
 		fi
 	;;
+	homelede_build_in)
+		DNS_FORWARD="127.0.0.1#7053"
+		echolog "DNS：使用HomeLede内置海内外DNS分流解析DNS。启动PSW内建ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，可信DNS：127.0.0.1#7053。"
+
+		prepare_chinadns_ng
+
+		ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $UP_CHINA_DNS -t $DNS_FORWARD $gfwlist_param $chnlist_param $fair_mode"
+	;;
 	esac
 }
 
 add_dnsmasq() {
+:<<!
+	支持记录DNSMASQ上游设置记录 - 开始
+!
+	LAST_UPSTREAM=$(uci get dhcp.@dnsmasq[-1].server)  >/dev/null 2>&1
+	if [ ! -z "$LAST_UPSTREAM" ]; then
+		echo $LAST_UPSTREAM > $APP_PATH/LAST_UPSTREAM
+	fi
+
+	LAST_NORESOLV=$(uci get dhcp.@dnsmasq[0].noresolv) >/dev/null 2>&1
+	if [ ! -z "$LAST_NORESOLV" ]; then
+		echo $LAST_NORESOLV > $APP_PATH/LAST_NORESOLV
+	fi
+	uci del dhcp.@dnsmasq[-1].server >/dev/null 2>&1
+	uci delete dhcp.@dnsmasq[0].resolvfile
+	uci set dhcp.@dnsmasq[0].noresolv=1
+:<<!
+	支持记录DNSMASQ上游设置记录 - 结束
+!
 	mkdir -p $TMP_DNSMASQ_PATH $DNSMASQ_PATH /var/dnsmasq.d
 	local adblock=$(config_t_get global_rules adblock 0)
 	local chinadns_mode=0
@@ -725,6 +756,36 @@ del_dnsmasq() {
 	rm -rf /var/dnsmasq.d/dnsmasq-$CONFIG.conf
 	rm -rf $DNSMASQ_PATH/dnsmasq-$CONFIG.conf
 	rm -rf $TMP_DNSMASQ_PATH
+
+:<<!
+	支持记录DNSMASQ上游设置恢复 - 开始
+!
+	if [ -s "$APP_PATH/LAST_UPSTREAM" ]; then
+		LAST_UPSTREAM=$(cat $APP_PATH/LAST_UPSTREAM)
+		uci add_list dhcp.@dnsmasq[0].server=$LAST_UPSTREAM
+		rm -rf $APP_PATH/LAST_UPSTREAM
+	fi
+	
+	LAST_NORESOLV=0
+	if [ -s "$APP_PATH/LAST_NORESOLV" ]; then
+		LAST_NORESOLV=$(cat $APP_PATH/LAST_NORESOLV)
+		rm -rf $APP_PATH/LAST_NORESOLV
+	fi
+	if [ "$LAST_NORESOLV" = "0"]; then
+	  if [ -s "/tmp/resolv.conf.d/resolv.conf.auto" ]; then
+		 uci set dhcp.@dnsmasq[0].resolvfile=/tmp/resolv.conf.d/resolv.conf.auto >/dev/null 2>&1
+		 uci set dhcp.@dnsmasq[0].noresolv=0 >/dev/null 2>&1
+	  elif [ -s "/tmp/resolv.conf.auto" ]; then
+		 uci set dhcp.@dnsmasq[0].resolvfile=/tmp/resolv.conf.auto >/dev/null 2>&1
+		 uci set dhcp.@dnsmasq[0].noresolv=0 >/dev/null 2>&1
+	  fi
+	else
+		uci delete dhcp.@dnsmasq[0].resolvfile >/dev/null 2>&1
+		uci set dhcp.@dnsmasq[0].noresolv=1
+	fi
+:<<!
+	支持记录DNSMASQ上游设置恢复 - 结束
+!
 }
 
 start_haproxy() {
