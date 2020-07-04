@@ -555,7 +555,7 @@ p {
 
 .tabs,
 .cbi-tabmenu {
-    border-bottom: 1.5px solid #34aee8;
+    border-bottom: 2px solid #34aee8;
     margin-bottom: 20px;
 }
 
@@ -666,7 +666,7 @@ table td,
 .table .th,
 .table .td {
     color: #811;
-    padding: 5px 3px !important;
+    padding: 3px !important;
 }
 
 table tr+tr td,
@@ -1037,6 +1037,13 @@ button:focus {
 .cbi-button-save:focus,
 .cbi-input-save:active,
 .cbi-input-save:focus {
+}
+
+/* LuCI 18 DynamicList */
+input[type="text"] + .cbi-button,
+input[type="password"] + .cbi-button,
+select + .cbi-button {
+	padding: 4px 8px;
 }
 
 
@@ -1521,9 +1528,7 @@ body.modal-overlay-active #modal_overlay>.modal {
 }
 
 .btn.primary,
-.cbi-button-action.important,
-.cbi-page-actions .cbi-button-apply,
-.cbi-section-actions .cbi-button-edit {
+.cbi-button-action.important {
     color: #fff;
     background: #118af3;
     border: 1px solid #118af3;
