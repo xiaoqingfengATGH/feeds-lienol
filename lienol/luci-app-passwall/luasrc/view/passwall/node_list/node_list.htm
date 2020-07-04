@@ -379,9 +379,9 @@ table td, .table .td {
 			var td = edit_btn[i].parentNode;
 			var new_div = "";
 			//添加"置顶"按钮到"修改"按钮前
-			new_div += '<input class="cbi-button" type="button" value="<%:To Top%>" onclick="_cbi_row_top(\'' + id + '\')"/>&nbsp;&nbsp;';
+			new_div += '<input class="cbi-button cbi-button-fieldadd" type="button" value="<%:To Top%>" onclick="_cbi_row_top(\'' + id + '\')"/>&nbsp;&nbsp;';
 			//添加"选择"按钮到"修改"按钮前
-			new_div += '<input class="cbi-button cbi-button-add" type="button" value="<%:Select%>" id="select_' + id + '" onclick="select_node_div(this, \'' + id + '\')"/>&nbsp;&nbsp;';
+			new_div += '<input class="cbi-button cbi-button-link" type="button" value="<%:Select%>" id="select_' + id + '" onclick="select_node_div(this, \'' + id + '\')"/>&nbsp;&nbsp;';
 			//添加"应用"按钮到"修改"按钮前
 			new_div += '<input class="cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_' + id + '" onclick="open_set_node_div(\'' + id + '\')"/>&nbsp;&nbsp;';
 			td.innerHTML = new_div + td.innerHTML;
