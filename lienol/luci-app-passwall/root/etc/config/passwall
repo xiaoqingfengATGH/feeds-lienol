@@ -10,6 +10,7 @@ config global
 	option dns_mode 'homelede_build_in'
 	option localhost_tcp_proxy_mode 'chnroute'
 	option localhost_udp_proxy_mode 'chnroute'
+	option socks_server '0.0.0.0:1080'
 
 config global_haproxy
 	option balancing_enable '0'
