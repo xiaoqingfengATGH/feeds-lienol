@@ -114,7 +114,8 @@ s:tab("DNS", translate("DNS Settings"))
 
 o = s:taboption("DNS", Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
 -- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-o.default = "default"
+o.default = "127.0.0.1#6053"
+o:value("127.0.0.1#6053",translate("HomeLede MainLand DNS Group"))
 o:value("default", translate("Default"))
 o:value("dnsbyisp", translate("dnsbyisp"))
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
@@ -146,28 +147,12 @@ end
 o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
 
-o = s:option(Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
--- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-o.default = "127.0.0.1#6053"
-o:value("127.0.0.1#6053", translate("HomeLede MainLand DNS Group"))
-o:value("default", translate("Default"))
-o:value("dnsbyisp", translate("dnsbyisp"))
-o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
-o:value("223.6.6.6", "223.6.6.6 (" .. translate("Ali") .. "DNS)")
-o:value("114.114.114.114", "114.114.114.114 (114DNS)")
-o:value("114.114.115.115", "114.114.115.115 (114DNS)")
-o:value("119.29.29.29", "119.29.29.29 (DNSPOD DNS)")
-o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
-o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
-o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
-o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
-
 ---- Upstream trust DNS Server for ChinaDNS-NG
 o = s:taboption("DNS", ListValue, "up_trust_chinadns_ng_dns",
              translate("Upstream trust DNS Server for ChinaDNS-NG") .. "(UDP)")
 -- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-o.default = "127.0.0.1#7053"
-o:value("127.0.0.1#7053",translate("HomeLede Oversea DNS Group"))
+o.default = "homeledeOversea"
+o:value("homeledeOversea",translate("HomeLede Oversea DNS Group"))
 if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
 end
@@ -200,12 +185,13 @@ o:depends({dns_mode = "homelede_build_in"})
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("DNS Address"))
 o.default = "8.8.4.4"
-o:value("127.0.0.1#7053",translate("HomeLede Oversea DNS Group"))
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
 o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
-o:depends({dns_mode = "chinadns-ng"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "pdnsd"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
+o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "udp"})
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
 

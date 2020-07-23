@@ -575,7 +575,7 @@ stop_crontab() {
 	#echolog "清除定时执行命令。"
 }
 
-prepare_chinadns_ng() {
+prepare_chinadns_ng() {		
 		[ -f "$RULES_PATH/gfwlist.conf" ] && cat $RULES_PATH/gfwlist.conf | sort | uniq | sed -e '/127.0.0.1/d' | sed 's/ipset=\/.//g' | sed 's/\/gfwlist//g' > $TMP_PATH/gfwlist.txt
 		[ -f "$TMP_PATH/gfwlist.txt" ] && {
 			[ -f "$RULES_PATH/blacklist_host" -a -s "$RULES_PATH/blacklist_host" ] && cat $RULES_PATH/blacklist_host >> $TMP_PATH/gfwlist.txt
@@ -647,15 +647,22 @@ start_dns() {
 			use_udp_node_resolve_dns=1
 			ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $china_ng_chn -t $china_ng_gfw $gfwlist_param $chnlist_param $fair_mode"
 			echolog "DNS：ChinaDNS-NG，国内DNS：$china_ng_chn，可信DNS：$up_trust_chinadns_ng_dns[$china_ng_gfw]，如果不能使用，请确保UDP节点已打开并且支持UDP转发。"
+		elif [ "$up_trust_chinadns_ng_dns" == "homeledeOversea" ]; then
+			ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $china_ng_chn -t 127.0.0.1#7053 $gfwlist_param $chnlist_param $fair_mode"
+			echolog "DNS：ChinaDNS-NG，国内DNS：$china_ng_chn，可信DNS：127.0.0.1#7053，如果不能使用，请确保HomeLede海内外分流解析DNS组工作正常。"
 		fi
 	;;
 	homelede_build_in)
+		local china_ng_chn=$(echo $UP_CHINA_DNS | sed 's/:/#/g')
+		local china_ng_gfw=$(echo $DNS_FORWARD | sed 's/:/#/g')
+		other_port=$(expr $DNS_PORT + 1)
+		
 		DNS_FORWARD="127.0.0.1#7053"
-		echolog "DNS：使用HomeLede内置海内外DNS分流解析DNS。启动PSW内建ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，可信DNS：127.0.0.1#7053。"
+		echolog "DNS：使用HomeLede内置海内外DNS分流解析DNS。启动PSW内建ChinaDNS-NG，国内DNS：$UP_CHINA_DNS，可信DNS：$DNS_FORWARD。"
 
 		prepare_chinadns_ng
 
-		ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $UP_CHINA_DNS -t $DNS_FORWARD $gfwlist_param $chnlist_param $fair_mode"
+		ln_start_bin $(find_bin chinadns-ng) chinadns-ng "-l $DNS_PORT -c $china_ng_chn -t $DNS_FORWARD $gfwlist_param $chnlist_param $fair_mode"
 	;;
 	esac
 }

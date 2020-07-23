@@ -26,9 +26,6 @@ config global_forwarding
 	option udp_no_redir_ports '80,443'
 	option tcp_redir_ports '22,25,53,143,465,587,993,995,80,443'
 	option udp_redir_ports '1:65535'
-	option socks_proxy_port1 '1081'
-	option socks_proxy_port2 '1082'
-	option socks_proxy_port3 '1083'
 	option proxy_ipv6 '0'
 
 config global_other
@@ -36,8 +33,8 @@ config global_other
 	option auto_ping '1'
 	option tcp_node_num '1'
 	option udp_node_num '1'
-	option socks_node_num '1'
 	option status_use_big_icon '1'
+
 	option compact_display_nodes '0'
 	option show_group '0'
 	option show_add_mode '0'
