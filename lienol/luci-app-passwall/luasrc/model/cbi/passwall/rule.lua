@@ -64,5 +64,4 @@ end
 
 o = s:option(DummyValue, "remarks", translate("Remarks"))
 
-              "<font color='red'>" ..
 return m
