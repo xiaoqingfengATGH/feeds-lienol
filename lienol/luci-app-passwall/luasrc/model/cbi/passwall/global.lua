@@ -1,17 +1,7 @@
 local o = require "luci.dispatcher"
-local sys = require "luci.sys"
-local ipkg = require("luci.model.ipkg")
 local uci = require"luci.model.uci".cursor()
-local _api = require "luci.model.cbi.passwall.api.api"
+local api = require "luci.model.cbi.passwall.api.api"
 local appname = "passwall"
-
-local function is_installed(e) return ipkg.installed(e) end
-
-local function is_finded(e)
-    return
-        sys.exec("find /usr/*bin -iname " .. e .. " -type f") ~= "" and true or
-            false
-end
 
 local nodes_table = {}
 uci:foreach(appname, "nodes", function(e)
@@ -114,7 +104,7 @@ s:tab("DNS", translate("DNS Settings"))
 o = s:taboption("DNS", Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
 -- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
 o.default = "127.0.0.1#6053"
-o:value("127.0.0.1#6053",translate("HomeLede MainLand DNS Group"))
+o:value("127.0.0.1#6053","127.0.0.1#6053（HomeLede国内组DNS)")
 o:value("default", translate("Default"))
 o:value("dnsbyisp", translate("dnsbyisp"))
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
@@ -126,43 +116,55 @@ o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
 o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
 o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
 o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
+o:depends("dns_mode", "chinadns-ng")
+o:depends("dns_mode", "pdnsd")
+o:depends("dns_mode", "dns2socks")
+o:depends("dns_mode", "nonuse")
 
 ---- DNS Forward Mode
-o = s:taboption("DNS", ListValue, "dns_mode", translate("DNS Mode"))
+o = s:taboption("DNS", Value, "dns_mode", translate("DNS Mode"))
 -- o.description = translate("if has problem, please try another mode.<br />if you use no patterns are used, DNS of wan will be used by default as upstream of dnsmasq.")
 o.rmempty = false
-o.default = "homelede_build_in"
 o:reset_values()
-o:value("homelede_build_in", translate("HomeLede built-in dns mode"))
-if is_finded("chinadns-ng") then
+o:value("homelede", "HomeLede built-in DNS scheme")
+if api.is_finded("chinadns-ng") then
     o:value("chinadns-ng", "ChinaDNS-NG")
 end
-if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
+if api.is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd")
 end
-if is_finded("dns2socks") then
+if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
-o:value("local_7913", translate("Use local port 7913 as DNS"))
 o:value("nonuse", translate("No patterns are used"))
+
+o = s:taboption("DNS", ListValue, "up_trust_pdnsd_dns",
+             translate("Upstream trust DNS Server for Pdnsd"))
+-- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
+o.default = ""
+o:value("", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
+o:value("udp", translate("Use UDP Node Resolve DNS"))
+if api.is_finded("dns2socks") then
+    o:value("dns2socks", "dns2socks")
+end
+o:depends("dns_mode", "pdnsd")
 
 ---- Upstream trust DNS Server for ChinaDNS-NG
 o = s:taboption("DNS", ListValue, "up_trust_chinadns_ng_dns",
              translate("Upstream trust DNS Server for ChinaDNS-NG") .. "(UDP)")
 -- o.description = translate("You can use other resolving DNS services as trusted DNS, Example: dns2socks, dns-forwarder... 127.0.0.1#5353<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
-o.default = "homeledeOversea"
-o:value("homeledeOversea",translate("HomeLede Oversea DNS Group"))
-if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
+o.default = "pdnsd"
+if api.is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd + " .. translate("Use TCP Node Resolve DNS"))
 end
-if is_finded("dns2socks") then
+if api.is_finded("dns2socks") then
     o:value("dns2socks", "dns2socks")
 end
 o:value("udp", translate("Use UDP Node Resolve DNS"))
 o:depends("dns_mode", "chinadns-ng")
 
 ---- Use TCP Node Resolve DNS
---[[ if is_installed("pdnsd") or is_installed("pdnsd-alt") or is_finded("pdnsd") then
+--[[ if api.is_finded("pdnsd") then
     o = s:taboption("DNS", Flag, "use_tcp_node_resolve_dns", translate("Use TCP Node Resolve DNS"))
     o.description = translate("If checked, DNS is resolved using the TCP node.")
     o.default = 1
@@ -174,23 +176,22 @@ o = s:taboption("DNS", Value, "socks_server", translate("Socks Server"))
 o.default = ""
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
+o:depends({dns_mode = "pdnsd", up_trust_pdnsd_dns = "dns2socks"})
 for k, v in pairs(socks_table) do o:value(v.id, v.remarks) end
 
 o = s:taboption("DNS", Flag, "fair_mode", translate("Fair Mode"))
 o.default = "1"
 o:depends({dns_mode = "chinadns-ng"})
-o:depends({dns_mode = "homelede_build_in"})
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("DNS Address"))
-o.default = "8.8.4.4"
+o.default = "127.0.0.1#7053"
+o:value("127.0.0.1#7053","127.0.0.1#7053（HomeLede海外组DNS)")
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
 o:value("208.67.220.220", "208.67.220.220 (Open DNS)")
-o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "pdnsd"})
-o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "dns2socks"})
-o:depends({dns_mode = "chinadns-ng", up_trust_chinadns_ng_dns = "udp"})
+o:depends({dns_mode = "chinadns-ng"})
 o:depends({dns_mode = "dns2socks"})
 o:depends({dns_mode = "pdnsd"})
 
@@ -254,7 +255,7 @@ s.anonymous = true
 s.addremove = true
 s.template = "cbi/tblsection"
 function s.create(e, t)
-    TypedSection.create(e, _api.gen_uuid())
+    TypedSection.create(e, api.gen_uuid())
 end
 
 o = s:option(DummyValue, "status", translate("Status"))
@@ -273,6 +274,7 @@ end
 for k, v in pairs(nodes_table) do o:value(v.id, v.remarks) end
 
 o = s:option(Value, "port", translate("Listen Port"))
+o.default = 9050
 o.datatype = "port"
 o.rmempty = false
 
