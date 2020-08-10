@@ -1018,11 +1018,5 @@ msgstr "无法移动新文件到：%s"
 msgid "DNS Settings"
 msgstr "DNS设置"
 
-msgid "HomeLede MainLand DNS Group"
-msgstr "127.0.0.1#6053（HomeLede国内DNS组）"
-
-msgid "HomeLede Oversea DNS Group"
-msgstr "127.0.0.1#7053（HomeLede海外DNS组）"
-
-msgid "HomeLede built-in dns mode"
+msgid "HomeLede built-in DNS scheme"
 msgstr "HomeLede内置海内外分流解析"

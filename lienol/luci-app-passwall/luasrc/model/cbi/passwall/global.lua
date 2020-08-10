@@ -104,7 +104,7 @@ s:tab("DNS", translate("DNS Settings"))
 o = s:taboption("DNS", Value, "up_china_dns", translate("China DNS Server") .. "(UDP)")
 -- o.description = translate("If you want to work with other DNS acceleration services, use the default.<br />Only use two at most, english comma separation, If you do not fill in the # and the following port, you are using port 53.")
 o.default = "127.0.0.1#6053"
-o:value("127.0.0.1#6053","127.0.0.1#6053（HomeLede国内组DNS)")
+o:value("127.0.0.1#6053","127.0.0.1#6053(HomeLede国内组DNS)")
 o:value("default", translate("Default"))
 o:value("dnsbyisp", translate("dnsbyisp"))
 o:value("223.5.5.5", "223.5.5.5 (" .. translate("Ali") .. "DNS)")
@@ -186,7 +186,7 @@ o:depends({dns_mode = "chinadns-ng"})
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("DNS Address"))
 o.default = "127.0.0.1#7053"
-o:value("127.0.0.1#7053","127.0.0.1#7053（HomeLede海外组DNS)")
+o:value("127.0.0.1#7053","127.0.0.1#7053(HomeLede海外组DNS)")
 o:value("8.8.4.4", "8.8.4.4 (Google DNS)")
 o:value("8.8.8.8", "8.8.8.8 (Google DNS)")
 o:value("208.67.222.222", "208.67.222.222 (Open DNS)")
