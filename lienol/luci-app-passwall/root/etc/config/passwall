@@ -9,7 +9,7 @@ config global
 	option localhost_udp_proxy_mode 'chnroute'
 	option enabled '0'
 	option tcp_node1 'nil'
-	option dns_mode 'homelede_build_in'
+	option dns_mode 'homelede'
 
 config global_haproxy
 	option balancing_enable '0'
