@@ -170,6 +170,7 @@ o:depends({dns_mode = "pdnsd", up_trust_pdnsd_dns = "dns2socks"})
 o = s:taboption("DNS", Flag, "fair_mode", translate("ChinaDNS-NG Fair Mode"))
 o.default = "1"
 o:depends({dns_mode = "chinadns-ng"})
+o:depends({dns_mode = "homelede"})
 
 ---- DNS Forward
 o = s:taboption("DNS", Value, "dns_forward", translate("Filtered DNS(For Proxied Domains)"), translate("IP:Port mode acceptable, the 1st for 'dns2socks' if split with english comma."))
