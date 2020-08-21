@@ -701,16 +701,23 @@ start_dns() {
 	homelede)
 		homelede_os="127.0.0.1#7053"
 		homelede_ml="127.0.0.1#6053"
+
+		echolog " HomeLede | - (chinadns-ng) 只支持2~4级的域名过滤..."
+		[ -z "${global}${chnlist}" ] && echolog "  | - (chinadns-ng) 此模式下，列表外的域名查询会同时发送给本地DNS(可切换到Pdnsd + TCP节点模式解决)..."
+		[ -n "${returnhome}" ] && msg="本地" || msg="代理"
+		[ -z "${global}${chnlist}" ] && echolog "  | - (chinadns-ng) 列表外域名查询的结果，不在中国IP段内(chnroute/chnroute6)时，只采信${msg} DNS 的应答..."
+		echolog "  | - (chinadns-ng) 海外组DNS(${homelede_os}) 有一定概率会比国内组DNS(${homelede_ml})先返回的话(比如 DNS 的本地查询缓存)，启用 '公平模式' 可以优先接受${msg} DNS 的中国IP段内(chnroute/chnroute6)的应答..."
+
 		use_udp_node_resolve_dns=1
 		if [ -z "${returnhome}" ]; then
-			china_ng_chn=$(homelede_ml)
-			china_ng_gfw=${homelede_os}
+			china_ng_gfw="${homelede_os}"
+			china_ng_chn="${homelede_ml}"
 		else
-			china_ng_chn=${homelede_os}
-			china_ng_gfw=$(homelede_ml)
+			china_ng_gfw="${homelede_ml}"
+			china_ng_chn="${homelede_os}"
 		fi
 		msg="udp"
-	
+			
 		cp -a "${RULES_PATH}/chnlist" "${TMP_PATH}/chnlist"
 		if [ -z "${returnhome}" ]; then
 			cat "${RULES_PATH}/direct_host" >> "${TMP_PATH}/chnlist"
@@ -726,7 +733,7 @@ start_dns() {
 		chnlist_param="${TMP_PATH}/chnlist"
 		[ "$(config_t_get global fair_mode 1)" = "1" ] && extra_mode="-f"
 		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "${DNS_PORT}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param:+-m "${chnlist_param}" -M} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} $extra_mode
-		echolog "  + 过滤服务：HomeLede-ChinaDNS-NG(:${DNS_PORT}${extra_mode}) + ${msg}：国内DNS：${china_ng_chn:-D114.114.114.114}，可信DNS：${china_ng_gfw:-D8.8.8.8}"
+		echolog "  + 过滤服务：HomeLede + ChinaDNS-NG(:${DNS_PORT}${extra_mode}) + ${msg}：中国域名列表：${china_ng_chn:-D114.114.114.114}，防火墙域名列表：${china_ng_gfw:-D8.8.8.8}"
 		[ -n "${global}${chnlist}" ] && [ -z "${returnhome}" ] && TUN_DNS="${china_ng_gfw}"
 	;;
 	*)
@@ -795,7 +802,14 @@ add_dnsmasq() {
 		[ -z "${global}" ] && {
 			[ -z "${chnlist}" ] || [ -n "${returnhome}" ] && [ -n "${force_local}" ] && unset fwd_dns
 			[ "${DNS_MODE}" = "other_dns" ] && fwd_dns="${TUN_DNS}"
-			sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/direct_host.conf"
+:<<!
+	Support for homelede start
+!
+			[ "${DNS_MODE}" = "homelede" ] && fwd_dns="127.0.0.1#6053"
+:<<!
+	Support for homelede end
+!
+		sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/direct_host.conf"
 			echolog "  - [$?]域名白名单(whitelist)：${fwd_dns:-默认}"
 		}
 
@@ -809,6 +823,13 @@ add_dnsmasq() {
 			[ -n "${returnhome}" ] && fwd_dns="${TUN_DNS}"
 			[ "${filtered_dns}" = "1" ] && [ -z "${chnlist}" ] && unset fwd_dns
 			[ -n "${global}" ] && unset fwd_dns
+:<<!
+	Support for homelede start
+!
+			[ "${DNS_MODE}" = "homelede" ] && fwd_dns="127.0.0.1#6053"
+:<<!
+	Support for homelede end
+!
 			sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_items "chnroute" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/chinalist_host.conf"
 			echolog "  - [$?]中国域名表(chnroute)：${fwd_dns:-默认}"
 		}
@@ -816,11 +837,25 @@ add_dnsmasq() {
 		fwd_dns="${TUN_DNS}"
 		[ "${filtered_dns}" = "1" ] && [ -z "${returnhome}" ] && unset fwd_dns
 		[ "${DNS_MODE}" = "chinadns-ng" ] || [ -n "${global}" ] && [ -z "${returnhome}" ] && unset fwd_dns
+:<<!
+	Support for homelede start
+!
+			[ "${DNS_MODE}" = "homelede" ] && fwd_dns="127.0.0.1#7053"
+:<<!
+	Support for homelede end
+!
 		sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_items "blacklist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/proxy_host.conf"
 		echolog "  - [$?]代理域名表(blacklist)：${fwd_dns:-默认}"
 
 		[ -n "${gfwlist}" ] || [ "${filtered_dns}" = "1" ] && [ -z "${returnhome}" ] && {
 			[ "${filtered_dns}" = "1" ] && [ "${DNS_MODE}" != "chinadns-ng" ] && unset fwd_dns
+:<<!
+	Support for homelede start
+!
+			[ "${DNS_MODE}" = "homelede" ] && fwd_dns="127.0.0.1#7053"
+:<<!
+	Support for homelede end
+!
 			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/gfwlist.conf"
 			echolog "  - [$?]防火墙域名表(gfwlist)：${fwd_dns:-默认}"
 		}
@@ -844,6 +879,15 @@ add_dnsmasq() {
 		if [ "${DNS_MODE}" = "chinadns-ng" ]; then
 			[ -z "${global}${chnlist}" ] && servers="127.0.0.1#${DNS_PORT}" && msg="chinadns-ng"
 		fi
+:<<!
+	Support for homelede start
+!
+		if [ "${DNS_MODE}" = "homelede" ]; then
+			servers="127.0.0.1#${DNS_PORT}" && msg="homelede(chinadns-ng)"
+		fi
+:<<!
+	Support for homelede end
+!
 		[ -n "${chnlist}" ] && msg="中国列表以外"
 		[ -n "${returnhome}" ] && msg="中国列表"
 		[ -n "${global}" ] && msg="全局"
