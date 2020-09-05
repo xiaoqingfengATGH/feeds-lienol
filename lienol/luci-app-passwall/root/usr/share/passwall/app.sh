@@ -283,6 +283,9 @@ load_config() {
 	}
 	
 	CHINADNS_NG=$(config_t_get global chinadns_ng 0)
+	
+	HOMELEDE=$(config_t_get global homelede 1)
+	
 	DNS_MODE=$(config_t_get global dns_mode pdnsd)
 	DNS_FORWARD=$(config_t_get global dns_forward 8.8.4.4:53 | sed 's/:/#/g')
 	DNS_CACHE=$(config_t_get global dns_cache 1)
@@ -703,6 +706,46 @@ start_dns() {
 		dns_listen_port=${other_port}
 	}
 	
+	[ "$HOMELEDE" = "1" ] && {
+		if [ -z "${returnhome}" ]; then
+			china_ng_chn="127.0.0.1#6053"
+			china_ng_gfw="127.0.0.1#7053"
+		else
+			china_ng_chn="127.0.0.1#7053"
+			china_ng_gfw="127.0.0.1#6053"
+		fi
+		msg="udp"
+
+		echolog "  | - (homelede -> chinadns-ng) 只支持2~4级的域名过滤..."
+		[ -z "${global}${chnlist}" ] && echolog "  | - (homelede -> chinadns-ng) 此模式下，列表外的域名查询会同时发送给本地DNS(可切换到Pdnsd + TCP节点模式解决)..."
+		[ -n "${returnhome}" ] && msg="本地" || msg="代理"
+		[ -z "${global}${chnlist}" ] && echolog "  | - (homelede -> chinadns-ng) 列表外域名查询的结果，不在中国IP段内(chnroute/chnroute6)时，只采信${msg} DNS 的应答..."
+		echolog "  | - (homelede -> chinadns-ng) 上游 DNS (${china_ng_gfw}) 有一定概率会比 DNS (${china_ng_chn}) 先返回的话(比如 DNS 的本地查询缓存)，启用 '公平模式' 可以优先接受${msg} DNS 的中国IP段内(chnroute/chnroute6)的应答..."
+
+		chnlist_param=
+		[ "$USE_CHNLIST" = "1" ] && {
+			cp -a "${RULES_PATH}/chnlist" "${TMP_PATH}/chnlist"
+			if [ -z "${returnhome}" ]; then
+				cat "${RULES_PATH}/direct_host" >> "${TMP_PATH}/chnlist"
+				echolog "  | - [$?](homelede -> chinadns-ng) 域名白名单合并到中国域名表"
+				cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/gfwlist.txt"
+				echolog "  | - [$?](homelede -> chinadns-ng) 代理域名表合并到防火墙域名表"
+				gfwlist_param="${TMP_PATH}/gfwlist.txt"
+			else
+				echolog "  | - (homelede -> chinadns-ng) 白名单不与中国域名表合并"
+				cat "${RULES_PATH}/proxy_host" >> "${TMP_PATH}/chnlist"
+				echolog "  | - [$?](homelede -> chinadns-ng) 忽略防火墙域名表，代理域名表合并到中国域名表"
+			fi
+			chnlist_param="${TMP_PATH}/chnlist"
+			chnlist_param=${chnlist_param:+-m "${chnlist_param}" -M}
+		}
+		[ "$(config_t_get global fair_mode 1)" = "1" ] && extra_mode="-f"
+		ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "${dns_listen_port}" ${china_ng_chn:+-c "${china_ng_chn}"} ${chnlist_param} ${china_ng_gfw:+-t "${china_ng_gfw}"} ${gfwlist_param:+-g "${gfwlist_param}"} $extra_mode
+		echolog "  + 过滤服务：HomeLede->ChinaDNS-NG(:${dns_listen_port}${extra_mode}) + ${msg}：中国域名列表：${china_ng_chn:-D114.114.114.114}，防火墙域名列表：${china_ng_gfw:-D8.8.8.8}"
+		dns_listen_port=${other_port}
+		DNS_MODE="homelede_chinadns-ng"
+	}
+	
 	case "$DNS_MODE" in
 	nonuse)
 		echolog "  - 被禁用，设置为非 '默认DNS' 并开启广告过滤可以按本插件内置的广告域名表进行过滤..."
@@ -829,9 +872,9 @@ add_dnsmasq() {
 
 		#始终用国内DNS解析直连（白名单）列表		
 		fwd_dns="${LOCAL_DNS}"
-		
 		#如果使用Chinadns-NG直接交给Chinadns-NG处理
 		[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
+		[ "$HOMELEDE" = "1" ] && unset fwd_dns
 		#如果没使用chnlist直接使用默认DNS
 		[ "${USE_CHNLIST}" = "0" ] && unset fwd_dns
 		sort -u "${RULES_PATH}/direct_host" | gen_dnsmasq_items "whitelist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/direct_host.conf"
@@ -844,6 +887,7 @@ add_dnsmasq() {
 				[ -n "${global}" ] && unset fwd_dns
 				#如果使用Chinadns-NG直接交给Chinadns-NG处理
 				[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
+				[ "$HOMELEDE" = "1" ] && unset fwd_dns
 				#如果使用回国模式，设置dns为远程DNS。
 				[ -n "${returnhome}" ] && fwd_dns="${TUN_DNS}"
 				sort -u "${RULES_PATH}/chnlist" | gen_dnsmasq_items "chnroute" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/chinalist_host.conf"
@@ -853,9 +897,9 @@ add_dnsmasq() {
 
 		#始终使用远程DNS解析代理（黑名单）列表
 		fwd_dns="${TUN_DNS}"
-
 		#如果使用Chinadns-NG直接交给Chinadns-NG处理
 		[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
+		[ "$HOMELEDE" = "1" ] && unset fwd_dns
 		#如果使用chnlist直接使用默认DNS
 		[ "${USE_CHNLIST}" = "1" ] && unset fwd_dns
 		sort -u "${RULES_PATH}/proxy_host" | gen_dnsmasq_items "blacklist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/proxy_host.conf"
@@ -866,6 +910,7 @@ add_dnsmasq() {
 			fwd_dns="${TUN_DNS}"
 			#如果使用Chinadns-NG直接交给Chinadns-NG处理
 			[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
+			[ "$HOMELEDE" = "1" ] && unset fwd_dns
 			#如果使用chnlist直接使用默认DNS
 			[ "${USE_CHNLIST}" = "1" ] && unset fwd_dns
 			sort -u "${TMP_PATH}/gfwlist.txt" | gen_dnsmasq_items "gfwlist" "${fwd_dns}" "${TMP_DNSMASQ_PATH}/gfwlist.conf"
@@ -878,6 +923,7 @@ add_dnsmasq() {
 			fwd_dns="${TUN_DNS}"
 			#如果使用Chinadns-NG直接交给Chinadns-NG处理
 			[ "$CHINADNS_NG" = "1" ] && unset fwd_dns
+			[ "$HOMELEDE" = "1" ] && unset fwd_dns
 			#如果使用chnlist直接使用默认DNS
 			[ "${USE_CHNLIST}" = "1" ] && unset fwd_dns
 			items=$(get_enabled_anonymous_secs "@subscribe_list")
@@ -896,21 +942,14 @@ add_dnsmasq() {
 		echo "conf-dir=${TMP_DNSMASQ_PATH}" > "${DNSMASQ_PATH}/dnsmasq-${CONFIG}.conf"
 
 		[ "${USE_CHNLIST}" = "1" ] && servers="${TUN_DNS}"
-
 		[ -n "${chnlist}" ] && msg="中国列表以外"
 		[ -n "${returnhome}" ] && msg="中国列表"
 		[ -n "${global}" ] && msg="全局"
 		if [ "$CHINADNS_NG" = "1" ]; then
 			#直接交给Chinadns-ng处理
 			servers="${TUN_DNS}" && msg="chinadns-ng"
-:<<!
-	Support for homelede start
-!
-		else if [ "${DNS_MODE}" = "homelede" ]; then
-			servers="127.0.0.1#${DNS_PORT}" && msg="homelede(chinadns-ng)"
-:<<!
-	Support for homelede end
-!
+		elif [ "$HOMELEDE" = "1" ]; then
+			servers="${TUN_DNS}" && msg="homelede -> chinadns-ng"
 		else
 			[ "${IS_DEFAULT_DNS}" = "1" ] && [ "${USE_CHNLIST}" = "0" ] && {
 				echolog "  - 不强制设置默认DNS(上级分配)！"

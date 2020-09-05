@@ -115,13 +115,19 @@ end
 
 s:tab("DNS", translate("DNS"))
 
+o = s:taboption("DNS", Flag, "homelede", translate("HomeLede内置分流解析"), translate("使用HomeLede固件内置海内外DNS分流解析。"))
+o.rmempty = false
+o.default = "1"
+
 if api.is_finded("chinadns-ng") then
     o = s:taboption("DNS", Flag, "chinadns_ng", translate("Use ChinaDNS-NG"), translate("When checked, forced to be set to dnsmasq upstream DNS."))
     o.default = "0"
+    o:depends("homelede",0)
 
     o = s:taboption("DNS", Flag, "fair_mode", translate("ChinaDNS-NG Fair Mode"))
     o.default = "1"
     o:depends("chinadns_ng", "1")
+    o:depends("homelede", "1")
 end
 
 o = s:taboption("DNS", Value, "up_china_dns", translate("Resolver For Local/WhiteList Domains") .. "(UDP)")
@@ -141,10 +147,7 @@ o:value("182.254.116.116", "182.254.116.116 (DNSPOD DNS)")
 o:value("1.2.4.8", "1.2.4.8 (CNNIC DNS)")
 o:value("210.2.4.8", "210.2.4.8 (CNNIC DNS)")
 o:value("180.76.76.76", "180.76.76.76 (" .. translate("Baidu") .. "DNS)")
-o:depends("dns_mode", "chinadns-ng")
-o:depends("dns_mode", "pdnsd")
-o:depends("dns_mode", "dns2socks")
-o:depends("dns_mode", "nonuse")
+o:depends("homelede", 0)
 
 ---- DoH
 o = s:taboption("DNS", Value, "up_china_dns_doh", translate("DoH request address"))
@@ -153,10 +156,11 @@ o:value("https://dns.alidns.com/dns-query,223.5.5.5,223.6.6.6", "AliDNS")
 o:value("https://doh.pub/dns-query,119.29.29.29,119.28.28.28", "DNSPod")
 o.default = "https://dns.alidns.com/dns-query,223.5.5.5,223.6.6.6"
 o:depends("up_china_dns", "https-dns-proxy")
+o:depends("homelede", 0)
 
 ---- DNS Forward Mode
 o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
-o.rmempty = false
+o.rmempty = true
 o:reset_values()
 if api.is_finded("pdnsd") then
     o:value("pdnsd", "pdnsd")
@@ -170,6 +174,7 @@ end
 o:value("udp", translatef("Requery DNS By %s", translate("UDP Node")))
 o:value("nonuse", translate("No Filter"))
 o:value("custom", translate("Custom DNS"))
+o:depends("homelede", 0)
 
 ---- Custom DNS
 o = s:taboption("DNS", Value, "custom_dns", translate("Custom DNS"))
