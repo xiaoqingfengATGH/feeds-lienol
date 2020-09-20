@@ -34,6 +34,9 @@ table td, .table .td {
 ._select {
 	background: #dad8d8;
 }
+.ping a:hover{
+	text-decoration : underline;
+}
 </style>
 
 <script type="text/javascript">
@@ -197,21 +200,11 @@ table td, .table .td {
 	}
 	
 	function get_address_full(id) {
-		<% if nodes_display:find("compact_display_nodes") then %>
-			var remarks = document.getElementById("cbid.passwall." + id + ".remarks").value;
-			var result = remarks.match("\\（(.+?)\\）");
-			if (result != null) {
-				var full = result[1];
-				var address = full.substring(0, full.lastIndexOf(":"));
-				var port = full.substring(full.lastIndexOf(":") + 1);
-			}
-		<% else %>
-			try {
-				var address = document.getElementById("cbid.passwall." + id + ".address").value;
-				var port = document.getElementById("cbid.passwall." + id + ".port").value;
-			}
-			catch(err){}
-		<% end %>
+		try {
+			var address = document.getElementById("cbid.passwall." + id + ".address").value;
+			var port = document.getElementById("cbid.passwall." + id + ".port").value;
+		}
+		catch(err){}
 		//判断是否含有汉字
 		var reg = new RegExp("[\\u4E00-\\u9FFF]+","g");
 		if ((address != null && address != "") && (port != null && port != "") && reg.test(address) == false && (address.indexOf(".") != -1 && address.charAt(address.address - 1) != ".")) {
@@ -249,9 +242,9 @@ table td, .table .td {
 	
 	/* 自动Ping */
 	var nodes = [];
-	const auto_ping_value = document.getElementsByClassName('auto_ping_value');
-	for (var i = 0; i < auto_ping_value.length; i++) {
-		var cbi_id = auto_ping_value[i].getAttribute("cbiid");
+	const ping_value = document.getElementsByClassName('ping_value');
+	for (var i = 0; i < ping_value.length; i++) {
+		var cbi_id = ping_value[i].getAttribute("cbiid");
 		var full = get_address_full(cbi_id);
 		if (full != null) {
 			var flag = false;
@@ -287,15 +280,15 @@ table td, .table .td {
 						var strs = dom.indexs.split(",");
 						for (var i = 0; i < strs.length; i++) {
 							if (result.ping == null || result.ping.trim() == "") {
-								auto_ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
+								ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
 							} else {
 								var ping = parseInt(result.ping);
 								if (ping < 100)
-									auto_ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
+									ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
 								else if (ping < 200)
-									auto_ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
+									ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
 								else if (ping >= 200)
-									auto_ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
+									ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
 							}
 						}
 					}
@@ -305,7 +298,7 @@ table td, .table .td {
 				function(x) {
 					var strs = dom.indexs.split(",");
 					for (var i = 0; i < strs.length; i++) {
-						auto_ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
+						ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
 					}
 					res();
 				}
@@ -343,15 +336,15 @@ table td, .table .td {
 					var strs = indexs.split(",");
 					for (var i = 0; i < strs.length; i++) {
 						if (result.ping == null || result.ping.trim() == "") {
-							auto_ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
+							ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
 						} else {
 							var ping = parseInt(result.ping);
 							if (ping < 100)
-								auto_ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
+								ping_value[strs[i]].innerHTML = "<font style='color:green'>" + result.ping + " ms" + "</font>";
 							else if (ping < 200)
-								auto_ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
+								ping_value[strs[i]].innerHTML = "<font style='color:#fb9a05'>" + result.ping + " ms" + "</font>";
 							else if (ping >= 200)
-								auto_ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
+								ping_value[strs[i]].innerHTML = "<font style='color:red'>" + result.ping + " ms" + "</font>";
 						}
 					}
 				}
@@ -361,7 +354,7 @@ table td, .table .td {
 			function(x) {
 				var strs = indexs.split(",");
 				for (var i = 0; i < strs.length; i++) {
-					auto_ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
+					ping_value[strs[i]].innerHTML = "<font style='color:red'><%:Timeout%></font>";
 				}
 				index++;
 				return auto_ping();
