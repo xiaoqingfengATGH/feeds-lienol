@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
 PKG_VERSION:=3.9
-PKG_RELEASE:=68
-PKG_DATE:=xiaoqingfengMod-20201006
+PKG_RELEASE:=73
+PKG_DATE:=xiaoqingfengMod-20201012
 
 PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
