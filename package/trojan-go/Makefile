@@ -24,11 +24,11 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/p4gefau1t/trojan-go
-GO_PKG_TAG:=-tags full
 GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/constant.Version=$(PKG_VERSION) \
 	$(GO_PKG)/constant.Commit=$(PKG_SOURCE_VERSION)
+GO_PKG_TAG:=-tags full
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
@@ -36,7 +36,7 @@ include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=$(GO_ARCH_DEPENDS)
+	DEPENDS:=$$(GO_ARCH_DEPENDS)
 	TITLE:=An unidentifiable mechanism that helps you bypass GFW. It's compatible with original trojan with experimental features.
 	URL:=https://github.com/p4gefau1t/trojan-go
 endef
@@ -60,7 +60,8 @@ endef
 
 ifeq ($(CONFIG_TROJAN_GO_COMPRESS_GOPROXY),y)
 export GO111MODULE=on
-export GOPROXY=https://goproxy.io
+GOPROXY=https://goproxy.cn
+#export GOPROXY=https://goproxy.io
 #export GOPROXY=https://mirrors.aliyun.com/goproxy/
 endif
 
@@ -71,7 +72,7 @@ endef
 define Build/Compile
 	$(eval GO_PKG_BUILD_PKG:=$(GO_PKG))
 	$(call GoPackage/Build/Configure)
-	$(call GoPackage/Build/Compile,$(GO_PKG_TAG))
+	$(call GoPackage/Build/Compile)
 ifeq ($(CONFIG_TROJAN_GO_COMPRESS_UPX),y)
 	$(STAGING_DIR_HOST)/bin/upx --lzma --best $(GO_PKG_BUILD_BIN_DIR)/$(PKG_NAME)
 endif
